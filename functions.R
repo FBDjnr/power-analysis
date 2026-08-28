@@ -49,17 +49,20 @@ test_quantities <- function(alpha, mu1, sigma, n, direction) {
     out$z0_l <- round((out$xcrit_l - MU0) / sdxbar, 3)
     out$z0_u <- round((out$xcrit_u - MU0) / sdxbar, 3)
 
-    # The original used two separate ifs, so at mu1 == mu0 the upper branch won.
-    # Kept as-is to leave the picture unchanged at that boundary.
-    if (mu1 < MU0) {
-      out$xcrit <- out$xcrit_l
-      out$z1 <- round((out$xcrit_l - mu1) / sdxbar, 3)
-      out$type_ii <- round(pnorm(out$z1, lower.tail = FALSE), 3)
-    } else {
-      out$xcrit <- out$xcrit_u
-      out$z1 <- round((out$xcrit_u - mu1) / sdxbar, 3)
-      out$type_ii <- round(pnorm(out$z1, lower.tail = TRUE), 3)
-    }
+    out$z1_l <- round((out$xcrit_l - mu1) / sdxbar, 3)
+    out$z1_u <- round((out$xcrit_u - mu1) / sdxbar, 3)
+
+    # A two-tailed test rejects below the lower cut or above the upper one, so
+    # power is the sum of both tail probabilities under the alternative. Counting
+    # only the nearer tail understates it, most severely when mu1 sits close to
+    # mu0, where the two tails contribute equally.
+    out$tail_lower <- pnorm(out$xcrit_l, mu1, sdxbar)
+    out$tail_upper <- pnorm(out$xcrit_u, mu1, sdxbar, lower.tail = FALSE)
+    out$type_ii <- round(1 - (out$tail_lower + out$tail_upper), 3)
+
+    # Kept for the marker line: the cut the alternative mean sits nearest.
+    out$xcrit <- if (mu1 < MU0) out$xcrit_l else out$xcrit_u
+    out$z1 <- if (mu1 < MU0) out$z1_l else out$z1_u
   }
 
   out
@@ -187,10 +190,39 @@ alternative_plot <- function(q, scale = 1) {
   compact <- scale < 0.75
   open_panel(c(0, ymax * 1.34), scale)
 
+  if (identical(q$direction, "TwoTail")) {
+    # Both tails reject, so both are shaded as power and the middle is beta.
+    shade_region(q$xcrit_l, q$xcrit_u, mu, sd, FILL_BETA)
+    shade_region(X_MIN, q$xcrit_l, mu, sd, FILL_POWER)
+    shade_region(q$xcrit_u, X_MAX, mu, sd, FILL_POWER)
+
+    segments(c(q$xcrit_l, q$xcrit_u), 0, c(q$xcrit_l, q$xcrit_u), ymax * 1.14,
+             lty = "twodash", lwd = 1.6)
+    arrows(q$xcrit_l, ymax * 1.1, q$xcrit_l - 5, ymax * 1.1,
+           length = 0.09 * scale, lwd = 2.2, col = FILL_REJECT)
+    arrows(q$xcrit_u, ymax * 1.1, q$xcrit_u + 5, ymax * 1.1,
+           length = 0.09 * scale, lwd = 2.2, col = FILL_REJECT)
+    arrows(q$xcrit_l, ymax * 1.1, q$xcrit_u, ymax * 1.1,
+           length = 0.09 * scale, lwd = 2.2, col = "blue", code = 3)
+
+    text(q$xcrit_l, ymax * 1.22, paste("z =", q$z1_l), cex = 1.25 * scale)
+    text(q$xcrit_u, ymax * 1.22, paste("z =", q$z1_u), cex = 1.25 * scale)
+
+    if (!compact) {
+      # Beta labels the middle; power is annotated on whichever tail carries more
+      # of it, since splitting the figure across both tails reads poorly.
+      text(q$mu0, ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
+      power_x <- if (q$tail_upper >= q$tail_lower) q$xcrit_u + 7 else q$xcrit_l - 7
+      text(power_x, ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
+    }
+
+    close_panel(scale)
+    return(invisible(NULL))
+  }
+
   # A lower-tail rejection region puts the power area left of the cut; an
   # upper-tail one puts it to the right.
-  lower_rejects <- identical(q$direction, "LTail") ||
-    (identical(q$direction, "TwoTail") && q$mu1 < q$mu0)
+  lower_rejects <- identical(q$direction, "LTail")
 
   if (lower_rejects) {
     shade_region(q$xcrit, X_MAX, mu, sd, FILL_BETA)

@@ -16,6 +16,11 @@ Two panels share a common x scale:
 Above them, a readout gives the current `alpha`, `beta`, power, and critical value
 as numbers, which is often what you actually want to read off.
 
+For a two-tailed test both rejection regions count toward power, so the alternative
+panel shades both tails. Setting the alternative mean equal to the null mean is worth
+trying: the rejection probability there is exactly `alpha`, which is what a power
+curve does at the null value.
+
 Controls cover the significance level, the alternative mean, the population standard
 deviation, the sample size, and whether the test is lower-tail, upper-tail, or
 two-tailed.

@@ -1,0 +1,14 @@
+# R session files
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# Legacy dependency management, replaced by manifest.json
+packrat/
+rsconnect/
+
+*.log
+
+# Stray device output
+Rplots.pdf

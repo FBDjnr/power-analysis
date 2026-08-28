@@ -209,11 +209,13 @@ alternative_plot <- function(q, scale = 1) {
     text(q$xcrit_u, ymax * 1.22, paste("z =", q$z1_u), cex = 1.25 * scale)
 
     if (!compact) {
-      # Beta labels the middle; power is annotated on whichever tail carries more
-      # of it, since splitting the figure across both tails reads poorly.
+      # Power is the sum of the two shaded tails, so the total is centred above the
+      # panel rather than placed beside one tail, where it read as that tail's own
+      # probability. Each tail carries its own share underneath.
       text(q$mu0, ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
-      power_x <- if (q$tail_upper >= q$tail_lower) q$xcrit_u + 7 else q$xcrit_l - 7
-      text(power_x, ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
+      text(q$mu0, ymax * 1.29, bquote(1 - beta == .(power)), cex = 1.6 * scale)
+      text(q$xcrit_l - 7, ymax * 1.06, sprintf("%.3f", q$tail_lower), cex = 1.25 * scale)
+      text(q$xcrit_u + 7, ymax * 1.06, sprintf("%.3f", q$tail_upper), cex = 1.25 * scale)
     }
 
     close_panel(scale)

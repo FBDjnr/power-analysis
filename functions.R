@@ -228,12 +228,11 @@ alternative_plot <- function(q, scale = 1) {
     text(clamp_x(q$xcrit_u), ymax * 1.22, paste("z =", q$z1_u), cex = 1.25 * scale)
 
     if (compact) {
-      # Neither tail is the whole of the power, so neither may carry the 1 - beta
-      # label. The total sits above the curve, belonging to both tails, exactly as
-      # it does at full size. This differs from the null panel, where each tail
-      # really is alpha/2 and labelling both is correct.
+      # Only the middle region is named here. Neither tail is the whole of the
+      # power, so neither can carry a 1 - beta label, and centring the total above
+      # the panel puts it over the beta region where it reads as naming that. The
+      # readout states the power, and its swatch matches the two shaded tails.
       text(q$mu0, ymax * 1.06, bquote(beta), cex = 1.9 * scale)
-      text(q$mu0, ymax * 1.29, bquote(1 - beta), cex = 1.6 * scale)
     } else {
       # Power is the sum of the two shaded tails, so the total is centred above the
       # panel rather than placed beside one tail, where it read as that tail's own

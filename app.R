@@ -135,10 +135,13 @@ server <- function(input, output, session) {
   output$readout <- renderUI({
     q <- quantities()
     power <- 1 - q$type_ii
+    # The critical value is quoted on the z scale under the null, which is what the
+    # test is actually carried out on and does not move with sigma or n. The two
+    # tailed cuts are symmetric about zero, so one magnitude states both.
     cut_label <- if (identical(q$direction, "TwoTail")) {
-      paste(round(q$xcrit_l, 2), "and", round(q$xcrit_u, 2))
+      HTML(paste0("&plusmn;", format(abs(q$z0_u), nsmall = 2)))
     } else {
-      as.character(round(q$xcrit, 2))
+      format(q$z0, nsmall = 2)
     }
 
     div(
@@ -149,7 +152,7 @@ server <- function(input, output, session) {
           span(class = "value", q$type_ii)),
       div(class = "stat power", span(class = "label", HTML("Power 1 &minus; &beta;")),
           span(class = "value", power)),
-      div(class = "stat", span(class = "label", "Critical Value"),
+      div(class = "stat", span(class = "label", HTML("Critical Value (<em>z</em>)")),
           span(class = "value", cut_label))
     )
   })

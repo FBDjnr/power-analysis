@@ -25,8 +25,18 @@ body { background: #f7f8fa; }
   border-radius: 8px;
   padding: 9px 12px;
 }
-.readout .stat.power { border-left-color: #2e8b57; }
-.readout .stat.beta  { border-left-color: #b3446c; }
+.readout .stat.alpha { border-left-color: #B22222; }
+.readout .stat.beta  { border-left-color: #87CEEB; }
+.readout .stat.power { border-left-color: #EEAEEE; }
+.readout .swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1px solid #33414f;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
 .readout .stat .label {
   display: block;
   font-size: 0.82rem;
@@ -146,11 +156,20 @@ server <- function(input, output, session) {
 
     div(
       class = "readout",
-      div(class = "stat", span(class = "label", HTML("Significance &alpha;")),
+      div(class = "stat alpha",
+          span(class = "label",
+               span(class = "swatch", style = "background:#B22222"),
+               HTML("Significance &alpha;")),
           span(class = "value", q$alpha)),
-      div(class = "stat beta", span(class = "label", HTML("Type II Error &beta;")),
+      div(class = "stat beta",
+          span(class = "label",
+               span(class = "swatch", style = "background:#87CEEB"),
+               HTML("Type II Error &beta;")),
           span(class = "value", q$type_ii)),
-      div(class = "stat power", span(class = "label", HTML("Power 1 &minus; &beta;")),
+      div(class = "stat power",
+          span(class = "label",
+               span(class = "swatch", style = "background:#EEAEEE"),
+               HTML("Power 1 &minus; &beta;")),
           span(class = "value", power)),
       div(class = "stat", span(class = "label", HTML("Critical Value (<em>z</em>)")),
           span(class = "value", cut_label))

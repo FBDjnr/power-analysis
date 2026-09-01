@@ -68,6 +68,14 @@ test_quantities <- function(alpha, mu1, sigma, n, direction) {
   out
 }
 
+# Function: clamp_x
+# Description: Keeps a label anchor inside the plotted window. With the x range
+#   fixed, an extreme alpha with a small n can push the critical value past the
+#   edge, which would otherwise draw labels off the panel.
+clamp_x <- function(x, margin = 4) {
+  min(max(x, X_MIN + margin), X_MAX - margin)
+}
+
 # Function: shade_region
 # Description: Fills the area under the normal curve between two bounds.
 shade_region <- function(lo, hi, mu, sd, fill) {
@@ -125,8 +133,9 @@ null_plot <- function(q, scale = 1) {
   sd <- q$sdxbar
   ymax <- dnorm(mu, mu, sd)
   a <- q$alpha
-  # Narrow panels omit the wide rate labels; the readout above the plots carries
-  # the same numbers, and at this size they would overlap each other.
+  # Narrow panels label the regions with the symbol alone. Carrying the value too
+  # made the labels wide enough to collide, but dropping them outright left the
+  # shaded areas with nothing naming them.
   compact <- scale < 0.75
   open_panel(c(0, ymax * 1.34), scale)
 
@@ -134,21 +143,27 @@ null_plot <- function(q, scale = 1) {
     shade_region(q$xcrit, X_MAX, mu, sd, FILL_ACCEPT)
     shade_region(X_MIN, q$xcrit, mu, sd, FILL_REJECT)
     mark_cut(q$xcrit, ymax, FILL_REJECT, "blue", scale = scale)
-    text(q$xcrit, ymax * 1.18, bquote(bar(x) == .(round(q$xcrit, 3))), cex = 1.25 * scale)
-    text(q$xcrit, ymax * 1.25, paste("z =", q$z0), cex = 1.25 * scale)
-    if (!compact) {
-      text(q$xcrit - 7, ymax * 1.06, bquote(alpha == .(a)), cex = 1.75 * scale)
-      text(q$xcrit + 7, ymax * 1.06, bquote(1 - alpha == .(1 - a)), cex = 1.75 * scale)
+    text(clamp_x(q$xcrit), ymax * 1.18, bquote(bar(x) == .(round(q$xcrit, 3))), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit), ymax * 1.25, paste("z =", q$z0), cex = 1.25 * scale)
+    if (compact) {
+      text(clamp_x(q$xcrit - 6), ymax * 1.06, bquote(alpha), cex = 1.9 * scale)
+      text(clamp_x(q$xcrit + 10), ymax * 1.06, bquote(1 - alpha), cex = 1.5 * scale)
+    } else {
+      text(clamp_x(q$xcrit - 7), ymax * 1.06, bquote(alpha == .(a)), cex = 1.75 * scale)
+      text(clamp_x(q$xcrit + 7), ymax * 1.06, bquote(1 - alpha == .(1 - a)), cex = 1.75 * scale)
     }
   } else if (identical(q$direction, "UTail")) {
     shade_region(X_MIN, q$xcrit, mu, sd, FILL_ACCEPT)
     shade_region(q$xcrit, X_MAX, mu, sd, FILL_REJECT)
     mark_cut(q$xcrit, ymax, "blue", FILL_REJECT, scale = scale)
-    text(q$xcrit, ymax * 1.18, bquote(bar(x) == .(round(q$xcrit, 3))), cex = 1.25 * scale)
-    text(q$xcrit, ymax * 1.25, paste("z =", q$z0), cex = 1.25 * scale)
-    if (!compact) {
-      text(q$xcrit - 7, ymax * 1.06, bquote(1 - alpha == .(1 - a)), cex = 1.75 * scale)
-      text(q$xcrit + 7, ymax * 1.06, bquote(alpha == .(a)), cex = 1.75 * scale)
+    text(clamp_x(q$xcrit), ymax * 1.18, bquote(bar(x) == .(round(q$xcrit, 3))), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit), ymax * 1.25, paste("z =", q$z0), cex = 1.25 * scale)
+    if (compact) {
+      text(clamp_x(q$xcrit - 10), ymax * 1.06, bquote(1 - alpha), cex = 1.5 * scale)
+      text(clamp_x(q$xcrit + 6), ymax * 1.06, bquote(alpha), cex = 1.9 * scale)
+    } else {
+      text(clamp_x(q$xcrit - 7), ymax * 1.06, bquote(1 - alpha == .(1 - a)), cex = 1.75 * scale)
+      text(clamp_x(q$xcrit + 7), ymax * 1.06, bquote(alpha == .(a)), cex = 1.75 * scale)
     }
   } else {
     shade_region(q$xcrit_l, q$xcrit_u, mu, sd, FILL_ACCEPT)
@@ -164,13 +179,17 @@ null_plot <- function(q, scale = 1) {
     arrows(q$xcrit_l, ymax * 1.1, q$xcrit_u, ymax * 1.1,
            length = 0.09 * scale, lwd = 2.2, col = "blue", code = 3)
 
-    text(q$xcrit_l, ymax * 1.18, bquote(bar(x) == .(round(q$xcrit_l, 3))), cex = 1.25 * scale)
-    text(q$xcrit_u, ymax * 1.18, bquote(bar(x) == .(round(q$xcrit_u, 3))), cex = 1.25 * scale)
-    text(q$xcrit_l, ymax * 1.25, paste("z =", q$z0_l), cex = 1.25 * scale)
-    text(q$xcrit_u, ymax * 1.25, paste("z =", q$z0_u), cex = 1.25 * scale)
-    if (!compact) {
-      text(q$xcrit_l - 7, ymax * 1.06, bquote(alpha / 2 == .(a / 2)), cex = 1.75 * scale)
-      text(q$xcrit_u + 7, ymax * 1.06, bquote(alpha / 2 == .(a / 2)), cex = 1.75 * scale)
+    text(clamp_x(q$xcrit_l), ymax * 1.18, bquote(bar(x) == .(round(q$xcrit_l, 3))), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit_u), ymax * 1.18, bquote(bar(x) == .(round(q$xcrit_u, 3))), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit_l), ymax * 1.25, paste("z =", q$z0_l), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit_u), ymax * 1.25, paste("z =", q$z0_u), cex = 1.25 * scale)
+    if (compact) {
+      text(clamp_x(q$xcrit_l - 8), ymax * 1.06, bquote(alpha / 2), cex = 1.5 * scale)
+      text(clamp_x(q$xcrit_u + 8), ymax * 1.06, bquote(alpha / 2), cex = 1.5 * scale)
+      text(mu, ymax * 1.06, bquote(1 - alpha), cex = 1.5 * scale)
+    } else {
+      text(clamp_x(q$xcrit_l - 7), ymax * 1.06, bquote(alpha / 2 == .(a / 2)), cex = 1.75 * scale)
+      text(clamp_x(q$xcrit_u + 7), ymax * 1.06, bquote(alpha / 2 == .(a / 2)), cex = 1.75 * scale)
       text(mu, ymax * 1.06, bquote(1 - alpha == .(1 - a)), cex = 1.75 * scale)
     }
   }
@@ -205,17 +224,21 @@ alternative_plot <- function(q, scale = 1) {
     arrows(q$xcrit_l, ymax * 1.1, q$xcrit_u, ymax * 1.1,
            length = 0.09 * scale, lwd = 2.2, col = "blue", code = 3)
 
-    text(q$xcrit_l, ymax * 1.22, paste("z =", q$z1_l), cex = 1.25 * scale)
-    text(q$xcrit_u, ymax * 1.22, paste("z =", q$z1_u), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit_l), ymax * 1.22, paste("z =", q$z1_l), cex = 1.25 * scale)
+    text(clamp_x(q$xcrit_u), ymax * 1.22, paste("z =", q$z1_u), cex = 1.25 * scale)
 
-    if (!compact) {
+    if (compact) {
+      text(q$mu0, ymax * 1.06, bquote(beta), cex = 1.9 * scale)
+      text(clamp_x(q$xcrit_l - 9), ymax * 1.06, bquote(1 - beta), cex = 1.45 * scale)
+      text(clamp_x(q$xcrit_u + 9), ymax * 1.06, bquote(1 - beta), cex = 1.45 * scale)
+    } else {
       # Power is the sum of the two shaded tails, so the total is centred above the
       # panel rather than placed beside one tail, where it read as that tail's own
       # probability. Each tail carries its own share underneath.
       text(q$mu0, ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
       text(q$mu0, ymax * 1.29, bquote(1 - beta == .(power)), cex = 1.6 * scale)
-      text(q$xcrit_l - 7, ymax * 1.06, sprintf("%.3f", q$tail_lower), cex = 1.25 * scale)
-      text(q$xcrit_u + 7, ymax * 1.06, sprintf("%.3f", q$tail_upper), cex = 1.25 * scale)
+      text(clamp_x(q$xcrit_l - 7), ymax * 1.06, sprintf("%.3f", q$tail_lower), cex = 1.25 * scale)
+      text(clamp_x(q$xcrit_u + 7), ymax * 1.06, sprintf("%.3f", q$tail_upper), cex = 1.25 * scale)
     }
 
     close_panel(scale)
@@ -230,21 +253,27 @@ alternative_plot <- function(q, scale = 1) {
     shade_region(q$xcrit, X_MAX, mu, sd, FILL_BETA)
     shade_region(X_MIN, q$xcrit, mu, sd, FILL_POWER)
     mark_cut(q$xcrit, ymax, FILL_REJECT, "blue", scale = scale)
-    if (!compact) {
-      text(q$xcrit - 7, ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
-      text(q$xcrit + 7, ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
+    if (compact) {
+      text(clamp_x(q$xcrit - 10), ymax * 1.06, bquote(1 - beta), cex = 1.5 * scale)
+      text(clamp_x(q$xcrit + 6), ymax * 1.06, bquote(beta), cex = 1.9 * scale)
+    } else {
+      text(clamp_x(q$xcrit - 7), ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
+      text(clamp_x(q$xcrit + 7), ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
     }
   } else {
     shade_region(X_MIN, q$xcrit, mu, sd, FILL_BETA)
     shade_region(q$xcrit, X_MAX, mu, sd, FILL_POWER)
     mark_cut(q$xcrit, ymax, "blue", FILL_REJECT, scale = scale)
-    if (!compact) {
-      text(q$xcrit + 7, ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
-      text(q$xcrit - 7, ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
+    if (compact) {
+      text(clamp_x(q$xcrit + 10), ymax * 1.06, bquote(1 - beta), cex = 1.5 * scale)
+      text(clamp_x(q$xcrit - 6), ymax * 1.06, bquote(beta), cex = 1.9 * scale)
+    } else {
+      text(clamp_x(q$xcrit + 7), ymax * 1.06, bquote(1 - beta == .(power)), cex = 1.75 * scale)
+      text(clamp_x(q$xcrit - 7), ymax * 1.06, bquote(beta == .(q$type_ii)), cex = 1.75 * scale)
     }
   }
 
-  text(q$xcrit, ymax * 1.15, paste("z =", q$z1), cex = 1.25 * scale)
+  text(clamp_x(q$xcrit), ymax * 1.15, paste("z =", q$z1), cex = 1.25 * scale)
   close_panel(scale)
   invisible(NULL)
 }
